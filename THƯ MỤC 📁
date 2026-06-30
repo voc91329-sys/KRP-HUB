@@ -1,0 +1,202 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ProximityService = game:GetService("ProximityPromptService")
+
+local Player = Players.LocalPlayer
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({Name = "KRP HUB", LoadingTitle = "LOADING...", LoadingSubtitle = "DOWNLOAD COMPLETED ✅️"})
+
+local Tab = Window:CreateTab("SYSTEM", nil)
+
+local isNoHoldEnabled = false
+Tab:CreateToggle({
+    Name = "SKIP THE HOLD TIME",
+    CurrentValue = false,
+    Callback = function(Value) 
+        isNoHoldEnabled = Value 
+    end,
+})
+
+ProximityService.PromptButtonHoldBegan:Connect(function(prompt)
+    if isNoHoldEnabled then 
+        prompt.HoldDuration = 0 
+    end
+end)
+
+local isJumpBoostEnabled = false
+local jumpConnection
+Tab:CreateToggle({
+    Name = "THRUST VERSION 1", 
+    CurrentValue = false,
+    Callback = function(Value) 
+        isJumpBoostEnabled = Value 
+        if isJumpBoostEnabled then
+            if not jumpConnection then
+                jumpConnection = RunService.Heartbeat:Connect(function()
+                    local char = Player.Character
+                    if not char then return end
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    local hum = char:FindFirstChild("Humanoid")
+                    if hrp and hum and hum:GetState() == Enum.HumanoidStateType.Jumping then
+                        local look = hrp.CFrame.LookVector
+                        hrp.AssemblyLinearVelocity = Vector3.new(look.X * 120, hrp.AssemblyLinearVelocity.Y, look.Z * 120)
+                        task.wait(0.2)
+                    end
+                end)
+            end
+        else
+            if jumpConnection then
+                jumpConnection:Disconnect()
+                jumpConnection = nil
+            end
+        end
+    end
+})
+
+local isSpeedBoostEnabled = false
+local speedConnection
+Tab:CreateToggle({
+    Name = "RUN FAST VERSION 1", 
+    CurrentValue = false, 
+    Flag = "SpeedBoostToggle", 
+    Callback = function(Value) 
+        isSpeedBoostEnabled = Value 
+        if isSpeedBoostEnabled then
+            if not speedConnection then
+                speedConnection = RunService.RenderStepped:Connect(function()
+                    local char = Player.Character
+                    if not char then return end
+                    local hum = char:FindFirstChild("Humanoid")
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hum and hrp and hum.MoveDirection.Magnitude > 0 then
+                        local moveDir = hum.MoveDirection
+                        hrp.AssemblyLinearVelocity = Vector3.new(moveDir.X * 80, hrp.AssemblyLinearVelocity.Y, moveDir.Z * 80)
+                    end
+                end)
+            end
+        else
+            if speedConnection then
+                speedConnection:Disconnect()
+                speedConnection = nil
+            end
+        end
+    end
+})
+
+local InfiniteJumpEnabled = false
+local jumpReqConnection
+Tab:CreateToggle({
+    Name = "INFINITE DANCE VERSION 1",
+    CurrentValue = false,
+    Callback = function(Value)
+        InfiniteJumpEnabled = Value
+        if InfiniteJumpEnabled then
+            if not jumpReqConnection then
+                jumpReqConnection = UserInputService.JumpRequest:Connect(function()
+                    local char = Player.Character
+                    if char then
+                        local hum = char:FindFirstChild("Humanoid")
+                        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+                    end
+                end)
+            end
+        else
+            if jumpReqConnection then
+                jumpReqConnection:Disconnect()
+                jumpReqConnection = nil
+            end
+        end
+    end
+})
+
+local NoclipEnabled = false
+local noclipConnection
+Tab:CreateToggle({
+    Name = "NOCLIP VERSION 1",
+    CurrentValue = false,
+    Callback = function(Value)
+        NoclipEnabled = Value
+        if NoclipEnabled then
+            if not noclipConnection then
+                noclipConnection = RunService.Stepped:Connect(function()
+                    local char = Player.Character
+                    if char then
+                        for _, v in pairs(char:GetChildren()) do
+                            if v:IsA("BasePart") then 
+                                v.CanCollide = false 
+                            end
+                        end
+                    end
+                end)
+            end
+        else
+            if noclipConnection then
+                noclipConnection:Disconnect()
+                noclipConnection = nil
+            end
+            local char = Player.Character
+            if char then
+                for _, v in pairs(char:GetChildren()) do
+                    if v:IsA("BasePart") then 
+                        v.CanCollide = true 
+                    end
+                end
+            end
+        end
+    end
+})
+
+local Flying = false
+local FlySpeed = 50
+local BodyVelocity, BodyGyro
+local flyConnection
+
+Tab:CreateToggle({
+    Name = "FLY VERSION 1",
+    CurrentValue = false,
+    Callback = function(Value)
+        Flying = Value
+        local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        
+        if Flying and hrp then
+            if not BodyVelocity then
+                BodyVelocity = Instance.new("BodyVelocity")
+                BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                BodyVelocity.Parent = hrp
+            end
+            
+            if not BodyGyro then
+                BodyGyro = Instance.new("BodyGyro")
+                BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+                BodyGyro.CFrame = hrp.CFrame
+                BodyGyro.Parent = hrp
+            end
+            
+            if not flyConnection then
+                flyConnection = RunService.RenderStepped:Connect(function()
+                    local cam = workspace.CurrentCamera
+                    if BodyGyro and BodyVelocity then
+                        BodyGyro.CFrame = cam.CFrame
+                        BodyVelocity.Velocity = cam.CFrame.LookVector * FlySpeed
+                    end
+                end)
+            end
+        else
+            if flyConnection then
+                flyConnection:Disconnect()
+                flyConnection = nil
+            end
+            if BodyVelocity then 
+                BodyVelocity:Destroy() 
+                BodyVelocity = nil 
+            end
+            if BodyGyro then 
+                BodyGyro:Destroy() 
+                BodyGyro = nil 
+            end
+        end
+    end
+})
