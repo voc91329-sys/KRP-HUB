@@ -8,7 +8,7 @@ local Player = Players.LocalPlayer
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({Name = "KRP HUB", LoadingTitle = "LOADING...", LoadingSubtitle = "DOWNLOAD COMPLETED ✅️"})
 
-local Tab = Window:CreateTab("SYSTEM", nil)
+local Tab = Window:CreateTab("SYSTEM", "settings")
 
 local isNoHoldEnabled = false
 Tab:CreateToggle({
@@ -28,7 +28,7 @@ end)
 local isJumpBoostEnabled = false
 local jumpConnection
 Tab:CreateToggle({
-    Name = "THRUST VERSION 1", 
+    Name = "THRUST", 
     CurrentValue = false,
     Callback = function(Value) 
         isJumpBoostEnabled = Value 
@@ -58,7 +58,7 @@ Tab:CreateToggle({
 local isSpeedBoostEnabled = false
 local speedConnection
 Tab:CreateToggle({
-    Name = "RUN FAST VERSION 1", 
+    Name = "RUN FAST", 
     CurrentValue = false, 
     Flag = "SpeedBoostToggle", 
     Callback = function(Value) 
@@ -88,7 +88,7 @@ Tab:CreateToggle({
 local InfiniteJumpEnabled = false
 local jumpReqConnection
 Tab:CreateToggle({
-    Name = "INFINITE DANCE VERSION 1",
+    Name = "INFINITE DANCE",
     CurrentValue = false,
     Callback = function(Value)
         InfiniteJumpEnabled = Value
@@ -114,7 +114,7 @@ Tab:CreateToggle({
 local NoclipEnabled = false
 local noclipConnection
 Tab:CreateToggle({
-    Name = "NOCLIP VERSION 1",
+    Name = "NOCLIP",
     CurrentValue = false,
     Callback = function(Value)
         NoclipEnabled = Value
@@ -154,7 +154,7 @@ local BodyVelocity, BodyGyro
 local flyConnection
 
 Tab:CreateToggle({
-    Name = "FLY VERSION 1",
+    Name = "FLY",
     CurrentValue = false,
     Callback = function(Value)
         Flying = Value
@@ -200,3 +200,169 @@ Tab:CreateToggle({
         end
     end
 })
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ESP_Active = false
+local ScanCounter = 0
+
+local function CreateESP(Player)
+    if Player == LocalPlayer or not Player.Character then return end
+    local Head = Player.Character:FindFirstChild("Head")
+    if not Head or Head:FindFirstChild("ESPTag") then return end
+    
+    local Bbg = Instance.new("BillboardGui", Head)
+    Bbg.Name = "ESPTag"
+    Bbg.AlwaysOnTop = true
+    Bbg.Size = UDim2.new(0, 150, 0, 30)
+    Bbg.StudsOffset = Vector3.new(0, 2, 0)
+    
+    local Txt = Instance.new("TextLabel", Bbg)
+    Txt.Size = UDim2.new(1, 0, 1, 0)
+    Txt.BackgroundTransparency = 1
+    Txt.TextColor3 = Color3.fromRGB(0, 255, 140)
+    Txt.TextStrokeTransparency = 0
+    Txt.Font = Enum.Font.SourceSansBold
+    Txt.TextSize = 13
+end
+
+local function Cleanup()
+    for _, Player in pairs(Players:GetPlayers()) do
+        if Player.Character and Player.Character:FindFirstChild("Head") then
+            local ESP = Player.Character.Head:FindFirstChild("ESPTag")
+            if ESP then ESP:Destroy() end
+        end
+    end
+end
+
+local ToggleESP = Tab:CreateToggle({
+    Name = "SEE ALL THE PLAYERS",
+    CurrentValue = false,
+    Flag = "SmartESP",
+    Callback = function(Value)
+        ESP_Active = Value
+        if not Value then Cleanup() return end
+
+        task.spawn(function()
+            while ESP_Active do
+                local MyHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local AllPlayers = Players:GetPlayers()
+                
+                if #AllPlayers > 1 then
+                    ScanCounter = ScanCounter + 1
+                    
+                    for _, Player in pairs(AllPlayers) do
+                        if Player ~= LocalPlayer then
+                            if Player.Character and Player.Character:FindFirstChild("Head") then
+                                local Head = Player.Character.Head
+                                local Hrp = Player.Character:FindFirstChild("HumanoidRootPart")
+                                
+                                if not Head:FindFirstChild("ESPTag") then
+                                    CreateESP(Player)
+                                end
+                                
+                                local ESP = Head:FindFirstChild("ESPTag")
+                                if ESP and Hrp and MyHrp then
+                                    local Dist = math.floor((MyHrp.Position - Hrp.Position).Magnitude)
+                                    ESP.TextLabel.Text = Player.DisplayName .. " [" .. Dist .. "m]"
+                                end
+                            end
+                        end
+                    end
+                    
+                    if ScanCounter >= 50 then 
+                        for _, Player in pairs(AllPlayers) do
+                            if Player.Character and Player.Character:FindFirstChild("Head") then
+                                local ESP = Player.Character.Head:FindFirstChild("ESPTag")
+                                if ESP and not Player.Character:FindFirstChild("HumanoidRootPart") then
+                                    ESP:Destroy()
+                                end
+                            end
+                        end
+                        ScanCounter = 0
+                    end
+                end
+                task.wait(10)
+            end
+        end)
+    end,
+})
+local VersionTab = Window:CreateTab("VERSION", "info")
+
+VersionTab:CreateLabel("VERSION: 1")
+VersionTab:CreateLabel("FIX LEVEL: 23")
+VersionTab:CreateLabel("ERROR: 0")
+VersionTab:CreateLabel("LEVEL: MEDIUM")
+VersionTab:CreateLabel("SUPPORT: 32BIT+64BIT")
+VersionTab:CreateLabel("PROGRESS: 20%")
+VersionTab:CreateLabel("Awaiting Advanced Bug Fixes...")
+VersionTab:CreateLabel("UPGRADE: DO NOT HAVE")
+VersionTab:CreateLabel("Fix lag: ✅️")
+VersionTab:CreateLabel("UPDATE: 1.1")
+VersionTab:CreateLabel("GAME BOOSTER")
+VersionTab:CreateButton({
+    Name = "BOOST",
+    Callback = function()
+        Rayfield:Notify({Title = "MAX POWER", Content = "ACTIVATED AT 100% POWER", Duration = 5})
+        
+        task.delay(5, function()
+            local l = game:GetService("Lighting")
+            local w = game:GetService("Workspace")
+            local m = game:GetService("MaterialService")
+            local t = w:FindFirstChildOfClass("Terrain")
+            
+            pcall(function()
+                l.GlobalShadows = false
+                l.Technology = Enum.Technology.Compatibility
+                l.FogEnd = 9e9
+                l.FogStart = 9e9
+                l.Brightness = 0
+                l.ClockTime = 12
+                m.Use2022Materials = false
+            end)
+            
+            if t then
+                pcall(function()
+                    t.WaterWaveSize = 0
+                    t.WaterReflectivity = 0
+                    t.WaterTransparency = 1
+                    t.Decoration = false
+                end)
+            end
+            
+            local r = {
+                ["Trail"]=true, ["Fire"]=true, ["Smoke"]=true, ["Sparkles"]=true, ["Beam"]=true, 
+                ["Explosion"]=true, ["PointLight"]=true, ["SpotLight"]=true, ["SurfaceLight"]=true, 
+                ["Decal"]=true, ["Texture"]=true, ["BloomEffect"]=true, ["BlurEffect"]=true, 
+                ["ColorCorrectionEffect"]=true, ["DepthOfFieldEffect"]=true, ["SunRaysEffect"]=true, 
+                ["Highlight"]=true, ["Atmosphere"]=true, ["Sky"]=true, ["Clouds"]=true, ["ForceField"]=true,
+                ["ParticleEmitter"]=true, ["SurfaceAppearance"]=true, ["WrapLayer"]=true, ["WrapTarget"]=true
+            }
+            
+            local d = game:GetDescendants()
+            for i = 1, #d do
+                local o = d[i]
+                if r[o.ClassName] == true then
+                    pcall(function() o:Destroy() end)
+                elseif o:IsA("BasePart") and not o:IsA("Terrain") then
+                    pcall(function()
+                        o.Material = Enum.Material.SmoothPlastic
+                        o.Reflectance = 0
+                        o.CastShadow = false
+                    end)
+                elseif o:IsA("MeshPart") then
+                    pcall(function()
+                        o.TextureID = ""
+                        o.Material = Enum.Material.SmoothPlastic
+                        o.Reflectance = 0
+                        o.CastShadow = false
+                    end)
+                end
+                
+                if i % 200 == 0 then task.wait() end
+            end
+            
+            Rayfield:Notify({Title = "SUCCESSFUL", Content = "ACTIVATED AT 100% POWER", Duration = 3})
+        end)
+    end
+})
+
