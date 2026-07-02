@@ -285,7 +285,121 @@ local ToggleESP = Tab:CreateToggle({
             end
         end)
     end,
+})local SavedPosition = nil
+local IsLocked = false
+local CurrentGui = nil
+local ButtonStage = 1
+
+local TpButton
+TpButton = Tab:CreateButton({
+    Name = "OPEN GUI",
+    Callback = function()
+        if ButtonStage == 1 then
+            -- GIAI ĐOẠN 1: Bấm để LƯU TỌA ĐỘ
+            local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                SavedPosition = hrp.CFrame
+                ButtonStage = 2
+                
+                -- Đổi tên nút thành "GUI TP" (Dùng pcall để tránh lỗi tùy phiên bản Rayfield)
+                pcall(function() TpButton:Set({Name = "GUI TP"}) end) 
+                Rayfield:Notify({Title = "THÀNH CÔNG", Content = "Đã lưu tọa độ! Bấm nút này 1 lần nữa để mở GUI.", Duration = 3})
+            end
+            
+        elseif ButtonStage == 2 then
+            -- GIAI ĐOẠN 2: Bấm để MỞ GUI
+            if CurrentGui then return end
+            
+            local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+            local GuiBox = Instance.new("TextButton", ScreenGui) -- Dùng TextButton để bắt Click TP cực nhạy
+            GuiBox.Size = UDim2.new(0, 45, 0, 45)
+            GuiBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+            GuiBox.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+            GuiBox.Text = "TP"
+            GuiBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            GuiBox.Font = Enum.Font.SourceSansBold
+            GuiBox.TextSize = 16
+            
+            local Corner = Instance.new("UICorner", GuiBox)
+            Corner.CornerRadius = UDim.new(0, 10)
+            CurrentGui = GuiBox
+
+            -- LOGIC KÉO & CLICK CHUẨN
+            local dragging = false
+            local isMoving = false
+            local dragStart, startPos
+
+            -- Khi chạm vào / click vào
+            GuiBox.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    if not IsLocked then
+                        dragging = true
+                        isMoving = false
+                        dragStart = input.Position
+                        startPos = GuiBox.Position
+                    end
+                end
+            end)
+
+            -- Khi di chuyển (kéo)
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = input.Position - dragStart
+                    if delta.Magnitude > 5 then -- Nhích qua 5 pixel thì xác định là Đang Kéo
+                        isMoving = true
+                        GuiBox.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                    end
+                end
+            end)
+
+            -- Khi thả tay / thả chuột
+            UserInputService.InputEnded:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                    dragging = false
+                    
+                    if isMoving then
+                        -- Nếu vừa kéo xong, hiện 2 nút
+                        if not GuiBox:FindFirstChild("YesBtn") then
+                            local YesBtn = Instance.new("TextButton", GuiBox)
+                            YesBtn.Name = "YesBtn"; YesBtn.Text = "Đồng ý"; YesBtn.Size = UDim2.new(0, 50, 0, 20); YesBtn.Position = UDim2.new(0, -10, 1, 5)
+                            YesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50); YesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            Instance.new("UICorner", YesBtn).CornerRadius = UDim.new(0, 5)
+                            
+                            local NoBtn = Instance.new("TextButton", GuiBox)
+                            NoBtn.Name = "NoBtn"; NoBtn.Text = "Không"; NoBtn.Size = UDim2.new(0, 50, 0, 20); NoBtn.Position = UDim2.new(0, 45, 1, 5)
+                            NoBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50); NoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            Instance.new("UICorner", NoBtn).CornerRadius = UDim.new(0, 5)
+                            
+                            YesBtn.MouseButton1Click:Connect(function()
+                                IsLocked = true -- Khóa vĩnh viễn không cho kéo
+                                YesBtn:Destroy()
+                                NoBtn:Destroy()
+                            end)
+                            NoBtn.MouseButton1Click:Connect(function()
+                                YesBtn:Destroy()
+                                NoBtn:Destroy()
+                            end)
+                        end
+                    end
+                    
+                    -- Trì hoãn 0.1s trước khi reset trạng thái isMoving để không bị nhầm với Click
+                    task.delay(0.1, function() isMoving = false end)
+                end
+            end)
+
+            -- SỰ KIỆN CLICK ĐỂ TP (Hoạt động kể cả khi đã khóa)
+            GuiBox.MouseButton1Click:Connect(function()
+                if not isMoving then
+                    local currentHrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+                    if currentHrp and SavedPosition then
+                        currentHrp.CFrame = SavedPosition
+                    end
+                end
+            end)
+        end
+    end,
 })
+
 local VersionTab = Window:CreateTab("VERSION", "info")
 
 VersionTab:CreateLabel("VERSION: 1")
@@ -365,4 +479,91 @@ VersionTab:CreateButton({
         end)
     end
 })
+-- ==========================================
+-- TAB SOUND - HỆ THỐNG ÂM THANH (ĐÃ NÂNG CẤP)
+-- ==========================================
+local SoundTab = Window:CreateTab("SOUND", "music")
 
+local currentSound = nil
+local originalVolumes = {} -- Bảng lưu âm lượng gốc
+local isMusicActive = false
+
+-- Hàm lưu và tắt âm thanh game
+local function MuteGameSounds()
+    originalVolumes = {} -- Reset danh sách
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("Sound") and obj ~= currentSound then
+            -- Chỉ lưu nếu nó đang có âm lượng > 0
+            if obj.Volume > 0 then
+                originalVolumes[obj] = obj.Volume
+                obj.Volume = 0
+            end
+        end
+    end
+end
+
+-- Hàm khôi phục âm thanh game
+local function RestoreGameSounds()
+    for sound, vol in pairs(originalVolumes) do
+        if sound then
+            sound.Volume = vol
+        end
+    end
+    originalVolumes = {} -- Xóa dữ liệu sau khi khôi phục
+end
+
+-- Theo dõi âm thanh mới xuất hiện khi nhạc đang phát
+local soundConnection
+soundConnection = game.DescendantAdded:Connect(function(obj)
+    if isMusicActive and obj:IsA("Sound") and obj ~= currentSound then
+        task.wait(0.1) -- Đợi load thuộc tính
+        originalVolumes[obj] = obj.Volume
+        obj.Volume = 0
+    end
+end)
+
+-- Hàm xử lý phát nhạc
+local function PlayMusic(audioId)
+    -- Nếu đang có nhạc phát thì tắt
+    if currentSound then
+        currentSound:Stop()
+        currentSound:Destroy()
+    end
+    
+    -- Tạo nhạc mới
+    currentSound = Instance.new("Sound")
+    currentSound.SoundId = "rbxassetid://" .. tostring(audioId)
+    currentSound.Looped = true
+    currentSound.Volume = 1
+    currentSound.Parent = game:GetService("CoreGui")
+    currentSound:Play()
+    
+    -- Bật chế độ im lặng game
+    isMusicActive = true
+    MuteGameSounds()
+    
+    Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt tiếng game, chỉ phát nhạc!", Duration = 2})
+end
+
+-- Nút phát nhạc
+SoundTab:CreateButton({ Name = "Khô gà", Callback = function() PlayMusic(110919391228823) end })
+SoundTab:CreateButton({ Name = "Ai đưa em về", Callback = function() PlayMusic(99152674992699) end })
+SoundTab:CreateButton({ Name = "Nam mô a di phật", Callback = function() PlayMusic(87611934554080) end })
+SoundTab:CreateButton({ Name = "Tinh vệ", Callback = function() PlayMusic(124384558101360) end })
+
+-- Nút Xóa nhạc và khôi phục âm thanh
+SoundTab:CreateButton({
+    Name = "❌ XÓA NHẠC & BẬT TIẾNG GAME",
+    Callback = function()
+        if currentSound then
+            currentSound:Stop()
+            currentSound:Destroy()
+            currentSound = nil
+        end
+        
+        isMusicActive = false
+        RestoreGameSounds() -- Khôi phục lại âm thanh game
+        
+        Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt nhạc, khôi phục âm thanh game!", Duration = 2})
+    end,
+})
