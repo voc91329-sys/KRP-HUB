@@ -1,8 +1,1 @@
-local _link = "https://raw.githubusercontent.com/voc91329-sys/KRP-HUB/refs/heads/main/KRP-Run"
-local _code = game:HttpGet(_link)
-local _f, _e = loadstring(_code)
-if _f then
-    _f()
-else
-    warn("Lỗi loadstring: " .. tostring(_e))
-end
+loadstring(game:HttpGet("https://raw.githubusercontent.com/voc91329-sys/KRP-HUB/refs/heads/main/TH%C6%AF%20M%E1%BB%A4C%20%F0%9F%93%81"))()
