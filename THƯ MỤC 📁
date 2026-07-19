@@ -544,16 +544,18 @@ BtnReplay = Tab:CreateButton({
 -- [8] PHẦN CUỐI: TOOL TP (BẬT/TẮT) & HOÀN TẤT
 ---------------------------------------------------------
 local ToolTP_Enabled = false
+local TOOL_NAME = "Dịch Chuyển" -- Định nghĩa tên Tool ở đây để không bị sai
 
 -- Hàm cấp Tool
 local function GiveTpTool()
     local backpack = Player:FindFirstChild("Backpack")
     if not backpack then return end
     
-    if backpack:FindFirstChild("Tp") or Player.Character:FindFirstChild("Tp") then return end
+    -- Kiểm tra xem đã có tool chưa
+    if backpack:FindFirstChild(TOOL_NAME) or Player.Character:FindFirstChild(TOOL_NAME) then return end
 
     local tool = Instance.new("Tool")
-    tool.Name = "Dịch Chuyển"
+    tool.Name = TOOL_NAME
     tool.RequiresHandle = false
     tool.Parent = backpack
 
@@ -570,8 +572,9 @@ end
 -- Hàm xóa Tool
 local function RemoveTpTool()
     local backpack = Player:FindFirstChild("Backpack")
-    if backpack and backpack:FindFirstChild("Tp") then backpack.Tp:Destroy() end
-    if Player.Character and Player.Character:FindFirstChild("Tp") then Player.Character.Tp:Destroy() end
+    -- Xóa đúng tên TOOL_NAME
+    if backpack and backpack:FindFirstChild(TOOL_NAME) then backpack[TOOL_NAME]:Destroy() end
+    if Player.Character and Player.Character:FindFirstChild(TOOL_NAME) then Player.Character[TOOL_NAME]:Destroy() end
 end
 
 -- Toggle Bật/Tắt
@@ -586,7 +589,7 @@ Tab:CreateToggle({
             Rayfield:Notify({Title = "KRP HUB", Content = "Đã bật Công Cụ Dịch Chuyển", Duration = 2})
         else
             RemoveTpTool()
-            Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt Công Cụ Dịch Chuyển", Duration = 2})
+            Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt và xóa Công Cụ Dịch Chuyển", Duration = 2})
         end
     end,
 })
@@ -598,6 +601,7 @@ Player.CharacterAdded:Connect(function()
         GiveTpTool()
     end
 end)
+
 
 
 ---------------------------------------------------------
