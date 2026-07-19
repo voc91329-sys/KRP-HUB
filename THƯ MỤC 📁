@@ -605,7 +605,7 @@ end)
 ---------------------------------------------------------
 -- nghi phần 9
 ---------------------------------------------------------
-local TrongLucDuocChon = 196
+local TrongLucDuocChon = 200
 
 -- Thanh kéo Trọng Lực (Đã sửa chuẩn form Rayfield)
 Tab:CreateSlider({
