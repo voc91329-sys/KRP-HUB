@@ -1,3 +1,6 @@
+---------------------------------------------------------
+-- [1] KHỞI TẠO CÁC DỊCH VỤ VÀ GIAO DIỆN RAYFIELD HUB
+---------------------------------------------------------
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -6,13 +9,17 @@ local ProximityService = game:GetService("ProximityPromptService")
 local Player = Players.LocalPlayer
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local Window = Rayfield:CreateWindow({Name = "KRP HUB", LoadingTitle = "LOADING...", LoadingSubtitle = "DOWNLOAD COMPLETED ✅️"})
+local Window = Rayfield:CreateWindow({Name = "KRP HUB", LoadingTitle = "Đang Tải...", LoadingSubtitle = "Đã Tải Xong ✅️"})
 
-local Tab = Window:CreateTab("SYSTEM", "settings")
+---------------------------------------------------------
+-- [2] TAB CÀI ĐẶT (CHỨA CÁC CHỨC NĂNG NHÂN VẬT)
+---------------------------------------------------------
+local Tab = Window:CreateTab("Cài Đặt", "settings")
 
+-- BỎ QUA THỜI GIAN NHẤN (TƯƠNG TÁC NHANH)
 local isNoHoldEnabled = false
 Tab:CreateToggle({
-    Name = "SKIP THE HOLD TIME",
+    Name = "Bỏ Qua Thời Gian",
     CurrentValue = false,
     Callback = function(Value) 
         isNoHoldEnabled = Value 
@@ -25,10 +32,11 @@ ProximityService.PromptButtonHoldBegan:Connect(function(prompt)
     end
 end)
 
+-- LỰC ĐẨY (JUMP BOOST)
 local isJumpBoostEnabled = false
 local jumpConnection
 Tab:CreateToggle({
-    Name = "THRUST", 
+    Name = "Lực Đẩy", 
     CurrentValue = false,
     Callback = function(Value) 
         isJumpBoostEnabled = Value 
@@ -55,10 +63,11 @@ Tab:CreateToggle({
     end
 })
 
+-- CHẠY NHANH (SPEED BOOST)
 local isSpeedBoostEnabled = false
 local speedConnection
 Tab:CreateToggle({
-    Name = "RUN FAST", 
+    Name = "Chạy Nhanh", 
     CurrentValue = false, 
     Flag = "SpeedBoostToggle", 
     Callback = function(Value) 
@@ -85,10 +94,11 @@ Tab:CreateToggle({
     end
 })
 
+-- NHẢY VÔ HẠN (INFINITE JUMP)
 local InfiniteJumpEnabled = false
 local jumpReqConnection
 Tab:CreateToggle({
-    Name = "INFINITE DANCE",
+    Name = "Nhảy Vô Hạn",
     CurrentValue = false,
     Callback = function(Value)
         InfiniteJumpEnabled = Value
@@ -111,10 +121,11 @@ Tab:CreateToggle({
     end
 })
 
+-- XUYÊN TƯỜNG (NOCLIP)
 local NoclipEnabled = false
 local noclipConnection
 Tab:CreateToggle({
-    Name = "NOCLIP",
+    Name = "Xuyên Tường",
     CurrentValue = false,
     Callback = function(Value)
         NoclipEnabled = Value
@@ -148,39 +159,66 @@ Tab:CreateToggle({
     end
 })
 
+---------------------------------------------------------
+-- [3] CHỨC NĂNG BAY (FLY MƯỢT - KHÔNG THANH KÉO)
+---------------------------------------------------------
 local Flying = false
-local FlySpeed = 50
+local FlySpeed = 70 
 local BodyVelocity, BodyGyro
 local flyConnection
 
 Tab:CreateToggle({
-    Name = "FLY",
+    Name = "Bay",
     CurrentValue = false,
+    Flag = "FlyMobileGodMode",
     Callback = function(Value)
         Flying = Value
-        local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        local char = Player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
         
-        if Flying and hrp then
+        if Flying and hrp and hum then
+            
             if not BodyVelocity then
                 BodyVelocity = Instance.new("BodyVelocity")
+                BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9) 
                 BodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
                 BodyVelocity.Parent = hrp
             end
             
             if not BodyGyro then
                 BodyGyro = Instance.new("BodyGyro")
                 BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-                BodyGyro.CFrame = hrp.CFrame
+                BodyGyro.CFrame = workspace.CurrentCamera.CFrame
                 BodyGyro.Parent = hrp
             end
             
             if not flyConnection then
                 flyConnection = RunService.RenderStepped:Connect(function()
+                    local currentChar = Player.Character
+                    local currentHum = currentChar and currentChar:FindFirstChild("Humanoid")
+                    local currentHrp = currentChar and currentChar:FindFirstChild("HumanoidRootPart")
                     local cam = workspace.CurrentCamera
-                    if BodyGyro and BodyVelocity then
+                    
+                    if BodyVelocity and BodyGyro and currentHum and currentHrp and cam then
                         BodyGyro.CFrame = cam.CFrame
-                        BodyVelocity.Velocity = cam.CFrame.LookVector * FlySpeed
+                        
+                        if currentHum.MoveDirection.Magnitude > 0 then
+                            local camCFrame = cam.CFrame
+                            local lookH = Vector3.new(camCFrame.LookVector.X, 0, camCFrame.LookVector.Z)
+                            if lookH.Magnitude > 0 then 
+                                lookH = lookH.Unit 
+                            end
+                            
+                            local camHorizontal = CFrame.lookAt(Vector3.new(), lookH)
+                            local localMove = camHorizontal:VectorToObjectSpace(currentHum.MoveDirection)
+                            
+                            local finalDir = camCFrame:VectorToWorldSpace(localMove)
+                            
+                            BodyVelocity.Velocity = finalDir * FlySpeed
+                        else
+                            BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                        end
                     end
                 end)
             end
@@ -200,6 +238,10 @@ Tab:CreateToggle({
         end
     end
 })
+
+---------------------------------------------------------
+-- [4] CHỨC NĂNG NHÌN THẤY NGƯỜI CHƠI KHÁC (ESP)
+---------------------------------------------------------
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ESP_Active = false
@@ -235,7 +277,7 @@ local function Cleanup()
 end
 
 local ToggleESP = Tab:CreateToggle({
-    Name = "SEE ALL THE PLAYERS",
+    Name = "Nhìn Thấy Tất Cả Người Chơi",
     CurrentValue = false,
     Flag = "SmartESP",
     Callback = function(Value)
@@ -285,33 +327,34 @@ local ToggleESP = Tab:CreateToggle({
             end
         end)
     end,
-})local SavedPosition = nil
+})
+---------------------------------------------------------
+-- [5] NÚT DỊCH CHUYỂN (GUI TP TRÊN MÀN HÌNH CHÍNH)
+---------------------------------------------------------
+local SavedPosition = nil
 local IsLocked = false
 local CurrentGui = nil
 local ButtonStage = 1
 
 local TpButton
 TpButton = Tab:CreateButton({
-    Name = "OPEN GUI",
+    Name = "mở giao diện nút bấm",
     Callback = function()
         if ButtonStage == 1 then
-            -- GIAI ĐOẠN 1: Bấm để LƯU TỌA ĐỘ
             local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
             if hrp then
                 SavedPosition = hrp.CFrame
                 ButtonStage = 2
                 
-                -- Đổi tên nút thành "GUI TP" (Dùng pcall để tránh lỗi tùy phiên bản Rayfield)
                 pcall(function() TpButton:Set({Name = "GUI TP"}) end) 
-                Rayfield:Notify({Title = "THÀNH CÔNG", Content = "Đã lưu tọa độ! Bấm nút này 1 lần nữa để mở GUI.", Duration = 3})
+                Rayfield:Notify({Title = "THÀNH CÔNG", Content = "ĐÃ LƯU ✅️", Duration = 3})
             end
             
         elseif ButtonStage == 2 then
-            -- GIAI ĐOẠN 2: Bấm để MỞ GUI
             if CurrentGui then return end
             
             local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-            local GuiBox = Instance.new("TextButton", ScreenGui) -- Dùng TextButton để bắt Click TP cực nhạy
+            local GuiBox = Instance.new("TextButton", ScreenGui) 
             GuiBox.Size = UDim2.new(0, 45, 0, 45)
             GuiBox.Position = UDim2.new(0.5, 0, 0.5, 0)
             GuiBox.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
@@ -324,12 +367,10 @@ TpButton = Tab:CreateButton({
             Corner.CornerRadius = UDim.new(0, 10)
             CurrentGui = GuiBox
 
-            -- LOGIC KÉO & CLICK CHUẨN
             local dragging = false
             local isMoving = false
             local dragStart, startPos
 
-            -- Khi chạm vào / click vào
             GuiBox.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     if not IsLocked then
@@ -341,24 +382,21 @@ TpButton = Tab:CreateButton({
                 end
             end)
 
-            -- Khi di chuyển (kéo)
             UserInputService.InputChanged:Connect(function(input)
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                     local delta = input.Position - dragStart
-                    if delta.Magnitude > 5 then -- Nhích qua 5 pixel thì xác định là Đang Kéo
+                    if delta.Magnitude > 5 then 
                         isMoving = true
                         GuiBox.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
                     end
                 end
             end)
 
-            -- Khi thả tay / thả chuột
             UserInputService.InputEnded:Connect(function(input)
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
                     dragging = false
                     
                     if isMoving then
-                        -- Nếu vừa kéo xong, hiện 2 nút
                         if not GuiBox:FindFirstChild("YesBtn") then
                             local YesBtn = Instance.new("TextButton", GuiBox)
                             YesBtn.Name = "YesBtn"; YesBtn.Text = "Đồng ý"; YesBtn.Size = UDim2.new(0, 50, 0, 20); YesBtn.Position = UDim2.new(0, -10, 1, 5)
@@ -371,7 +409,7 @@ TpButton = Tab:CreateButton({
                             Instance.new("UICorner", NoBtn).CornerRadius = UDim.new(0, 5)
                             
                             YesBtn.MouseButton1Click:Connect(function()
-                                IsLocked = true -- Khóa vĩnh viễn không cho kéo
+                                IsLocked = true 
                                 YesBtn:Destroy()
                                 NoBtn:Destroy()
                             end)
@@ -382,12 +420,10 @@ TpButton = Tab:CreateButton({
                         end
                     end
                     
-                    -- Trì hoãn 0.1s trước khi reset trạng thái isMoving để không bị nhầm với Click
                     task.delay(0.1, function() isMoving = false end)
                 end
             end)
 
-            -- SỰ KIỆN CLICK ĐỂ TP (Hoạt động kể cả khi đã khóa)
             GuiBox.MouseButton1Click:Connect(function()
                 if not isMoving then
                     local currentHrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
@@ -399,24 +435,191 @@ TpButton = Tab:CreateButton({
         end
     end,
 })
+---------------------------------------------------------
+-- CHỨC NĂNG TUA NGƯỢC THỜI GIAN (FIX LỖI RAYFIELD)
+---------------------------------------------------------
+Tab:CreateLabel("⏱️ Tua Ngược Thời Gian")
 
-local VersionTab = Window:CreateTab("VERSION", "info")
+local RecordDuration = 10
+local RecordedFrames = {}
+local IsRecording = false
+local IsReplaying = false
+local RecordConnection = nil
 
-VersionTab:CreateLabel("VERSION: 1")
-VersionTab:CreateLabel("FIX LEVEL: 23")
-VersionTab:CreateLabel("ERROR: 0")
-VersionTab:CreateLabel("LEVEL: MEDIUM")
-VersionTab:CreateLabel("SUPPORT: 32BIT+64BIT")
-VersionTab:CreateLabel("PROGRESS: 20%")
-VersionTab:CreateLabel("Awaiting Advanced Bug Fixes...")
-VersionTab:CreateLabel("UPGRADE: DO NOT HAVE")
+-- Thanh kéo thời gian ghi hình
+Tab:CreateSlider({
+    Name = "Thời Gian Ghi Hình Tối Đa",
+    Range = {1, 30},
+    Increment = 1,
+    Suffix = "Giây",
+    CurrentValue = 0,
+    Flag = "RewindTime",
+    Callback = function(Value)
+        RecordDuration = Value
+    end,
+})
+
+local BtnRecord, BtnReplay
+
+-- Nút Bắt Đầu Ghi Hình
+BtnRecord = Tab:CreateButton({
+    Name = "🔴 Bắt Đầu Ghi Hình",
+    Callback = function()
+        if IsReplaying then return end 
+        
+        if IsRecording then
+            -- Bấm lần 2 để DỪNG GHI sớm (Fix lỗi Set chuỗi ở đây)
+            IsRecording = false
+            if RecordConnection then RecordConnection:Disconnect() end
+            BtnRecord:Set("🔴 Bắt Đầu Ghi Hình") 
+            Rayfield:Notify({Title = "Thành Công", Content = "Đã lưu tọa độ. Hãy bấm Tua Ngược!", Duration = 3})
+        else
+            -- BẮT ĐẦU GHI
+            IsRecording = true
+            RecordedFrames = {} -- Xóa dữ liệu cũ
+            BtnRecord:Set("⏹️ Đang Ghi... (Bấm để Dừng)") -- Đã fix lỗi Table
+            
+            local startTime = tick()
+            
+            RecordConnection = RunService.Heartbeat:Connect(function()
+                local char = Player.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                
+                if hrp and IsRecording then
+                    table.insert(RecordedFrames, {
+                        cf = hrp.CFrame,
+                        vel = hrp.AssemblyLinearVelocity 
+                    })
+                    
+                    if tick() - startTime >= RecordDuration then
+                        IsRecording = false
+                        RecordConnection:Disconnect()
+                        BtnRecord:Set("🔴 Bắt Đầu Ghi Hình")
+                        Rayfield:Notify({Title = "Hoàn Tất", Content = "Đã hết " .. RecordDuration .. "s ghi hình!", Duration = 3})
+                    end
+                end
+            end)
+        end
+    end,
+})
+
+-- Nút Tua Ngược
+BtnReplay = Tab:CreateButton({
+    Name = "⏪ Bắt Đầu Tua Ngược",
+    Callback = function()
+        if IsRecording or IsReplaying then return end
+        if #RecordedFrames == 0 then
+            Rayfield:Notify({Title = "Lỗi", Content = "Bạn chưa ghi hình hành động nào!", Duration = 3})
+            return
+        end
+        
+        IsReplaying = true
+        Rayfield:Notify({Title = "Tua Ngược", Content = "Đang lùi lại thời gian...", Duration = 3})
+        
+        task.spawn(function()
+            local char = Player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if hrp then
+                -- CHẠY VÒNG LẶP NGƯỢC (Từ khung cuối về khung đầu tiên)
+                for i = #RecordedFrames, 1, -1 do
+                    if not IsReplaying or not char or not char:FindFirstChild("HumanoidRootPart") then break end
+                    
+                    local frameData = RecordedFrames[i]
+                    hrp.CFrame = frameData.cf
+                    
+                    -- Đảo ngược gia tốc để lừa hệ thống animation (nhân vật không bị đơ)
+                    hrp.AssemblyLinearVelocity = -frameData.vel 
+                    
+                    RunService.Heartbeat:Wait() 
+                end
+            end
+            
+            IsReplaying = false
+            Rayfield:Notify({Title = "Xong", Content = "Đã kết thúc tua ngược!", Duration = 3})
+        end)
+    end,
+})
+---------------------------------------------------------
+-- [8] PHẦN CUỐI: TOOL TP (BẬT/TẮT) & HOÀN TẤT
+---------------------------------------------------------
+local ToolTP_Enabled = false
+
+-- Hàm cấp Tool
+local function GiveTpTool()
+    local backpack = Player:FindFirstChild("Backpack")
+    if not backpack then return end
+    
+    if backpack:FindFirstChild("Tp") or Player.Character:FindFirstChild("Tp") then return end
+
+    local tool = Instance.new("Tool")
+    tool.Name = "Tp"
+    tool.RequiresHandle = false
+    tool.Parent = backpack
+
+    tool.Activated:Connect(function()
+        local mouse = Player:GetMouse()
+        local targetPos = mouse.Hit.Position
+        local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+        end
+    end)
+end
+
+-- Hàm xóa Tool
+local function RemoveTpTool()
+    local backpack = Player:FindFirstChild("Backpack")
+    if backpack and backpack:FindFirstChild("Tp") then backpack.Tp:Destroy() end
+    if Player.Character and Player.Character:FindFirstChild("Tp") then Player.Character.Tp:Destroy() end
+end
+
+-- Toggle Bật/Tắt
+Tab:CreateToggle({
+    Name = "Tool TP",
+    CurrentValue = false,
+    Flag = "ToggleTpTool",
+    Callback = function(Value)
+        ToolTP_Enabled = Value
+        if Value then
+            GiveTpTool()
+            Rayfield:Notify({Title = "KRP HUB", Content = "Đã bật Tool TP", Duration = 2})
+        else
+            RemoveTpTool()
+            Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt và xóa Tool TP", Duration = 2})
+        end
+    end,
+})
+
+-- Tự động cấp lại khi hồi sinh (chỉ chạy nếu đang BẬT)
+Player.CharacterAdded:Connect(function()
+    if ToolTP_Enabled then
+        task.wait(1)
+        GiveTpTool()
+    end
+end)
+
+
+---------------------------------------------------------
+-- [6] TAB THÔNG TIN PHIÊN BẢN VÀ XÓA LAG (GAME BOOSTER)
+---------------------------------------------------------
+local VersionTab = Window:CreateTab("Phiên Bản", "info")
+
+VersionTab:CreateLabel("phiên bản 1")
+VersionTab:CreateLabel("cấp độ:2")
+VersionTab:CreateLabel("lỗi:0")
+VersionTab:CreateLabel("đang sửa lỗi...")
+VersionTab:CreateLabel("hộ trợ: 32BIT+64BIT")
+VersionTab:CreateLabel("mức độ hiện tại: 25%")
+VersionTab:CreateLabel("đang nâng cấp bảo mật")
 VersionTab:CreateLabel("Fix lag: ✅️")
-VersionTab:CreateLabel("UPDATE: 1.1")
-VersionTab:CreateLabel("GAME BOOSTER")
+VersionTab:CreateLabel("cập nhật: 1.2")
+VersionTab:CreateLabel("ĐÃ VÁ LỖI✅️")
+VersionTab:CreateLabel("GAME KRUNA")
 VersionTab:CreateButton({
     Name = "BOOST",
     Callback = function()
-        Rayfield:Notify({Title = "MAX POWER", Content = "ACTIVATED AT 100% POWER", Duration = 5})
+        Rayfield:Notify({Title = "Kích Hoặt", Content = "Đã Kích Hoặt", Duration = 5})
         
         task.delay(5, function()
             local l = game:GetService("Lighting")
@@ -475,25 +678,24 @@ VersionTab:CreateButton({
                 if i % 200 == 0 then task.wait() end
             end
             
-            Rayfield:Notify({Title = "SUCCESSFUL", Content = "ACTIVATED AT 100% POWER", Duration = 3})
+            Rayfield:Notify({Title = "Đã Thành Công", Content = "Kích Hoặt 100% Công Suất", Duration = 3})
         end)
     end
 })
--- ==========================================
--- TAB SOUND - HỆ THỐNG ÂM THANH (ĐÃ NÂNG CẤP)
--- ==========================================
-local SoundTab = Window:CreateTab("SOUND", "music")
+
+---------------------------------------------------------
+-- [7] TAB ÂM THANH (PHÁT NHẠC VÀ TẮT TIẾNG GAME)
+---------------------------------------------------------
+local SoundTab = Window:CreateTab("Nhạc", "music")
 
 local currentSound = nil
-local originalVolumes = {} -- Bảng lưu âm lượng gốc
+local originalVolumes = {} 
 local isMusicActive = false
 
--- Hàm lưu và tắt âm thanh game
 local function MuteGameSounds()
-    originalVolumes = {} -- Reset danh sách
+    originalVolumes = {} 
     for _, obj in pairs(game:GetDescendants()) do
         if obj:IsA("Sound") and obj ~= currentSound then
-            -- Chỉ lưu nếu nó đang có âm lượng > 0
             if obj.Volume > 0 then
                 originalVolumes[obj] = obj.Volume
                 obj.Volume = 0
@@ -502,35 +704,30 @@ local function MuteGameSounds()
     end
 end
 
--- Hàm khôi phục âm thanh game
 local function RestoreGameSounds()
     for sound, vol in pairs(originalVolumes) do
         if sound then
             sound.Volume = vol
         end
     end
-    originalVolumes = {} -- Xóa dữ liệu sau khi khôi phục
+    originalVolumes = {} 
 end
 
--- Theo dõi âm thanh mới xuất hiện khi nhạc đang phát
 local soundConnection
 soundConnection = game.DescendantAdded:Connect(function(obj)
     if isMusicActive and obj:IsA("Sound") and obj ~= currentSound then
-        task.wait(0.1) -- Đợi load thuộc tính
+        task.wait(0.1) 
         originalVolumes[obj] = obj.Volume
         obj.Volume = 0
     end
 end)
 
--- Hàm xử lý phát nhạc
 local function PlayMusic(audioId)
-    -- Nếu đang có nhạc phát thì tắt
     if currentSound then
         currentSound:Stop()
         currentSound:Destroy()
     end
     
-    -- Tạo nhạc mới
     currentSound = Instance.new("Sound")
     currentSound.SoundId = "rbxassetid://" .. tostring(audioId)
     currentSound.Looped = true
@@ -538,22 +735,22 @@ local function PlayMusic(audioId)
     currentSound.Parent = game:GetService("CoreGui")
     currentSound:Play()
     
-    -- Bật chế độ im lặng game
     isMusicActive = true
     MuteGameSounds()
     
     Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt tiếng game, chỉ phát nhạc!", Duration = 2})
 end
 
--- Nút phát nhạc
-SoundTab:CreateButton({ Name = "Khô gà", Callback = function() PlayMusic(110919391228823) end })
-SoundTab:CreateButton({ Name = "Ai đưa em về", Callback = function() PlayMusic(99152674992699) end })
+SoundTab:CreateButton({ Name = "Ai đưa em về", Callback = function() PlayMusic(110919391228823) end })
+SoundTab:CreateButton({ Name = "khô gà", Callback = function() PlayMusic(99152674992699) end })
 SoundTab:CreateButton({ Name = "Nam mô a di phật", Callback = function() PlayMusic(87611934554080) end })
 SoundTab:CreateButton({ Name = "Tinh vệ", Callback = function() PlayMusic(124384558101360) end })
+SoundTab:CreateButton({ Name = "Montagem", Callback = function() PlayMusic(92789194329726) end })
+SoundTab:CreateButton({ Name = "Montagem Dj", Callback = function() PlayMusic(86756522213811) end })
+SoundTab:CreateButton({ Name = "Montagem", Callback = function() PlayMusic(136221009150327) end })
 
--- Nút Xóa nhạc và khôi phục âm thanh
 SoundTab:CreateButton({
-    Name = "❌ XÓA NHẠC & BẬT TIẾNG GAME",
+    Name = "❌ XÓA NHẠC",
     Callback = function()
         if currentSound then
             currentSound:Stop()
@@ -562,8 +759,7 @@ SoundTab:CreateButton({
         end
         
         isMusicActive = false
-        RestoreGameSounds() -- Khôi phục lại âm thanh game
-        
-        Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt nhạc, khôi phục âm thanh game!", Duration = 2})
+        RestoreGameSounds()
     end,
 })
+
