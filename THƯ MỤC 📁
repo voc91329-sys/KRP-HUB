@@ -553,7 +553,7 @@ local function GiveTpTool()
     if backpack:FindFirstChild("Tp") or Player.Character:FindFirstChild("Tp") then return end
 
     local tool = Instance.new("Tool")
-    tool.Name = "Tp"
+    tool.Name = "Dịch Chuyển"
     tool.RequiresHandle = false
     tool.Parent = backpack
 
@@ -576,17 +576,17 @@ end
 
 -- Toggle Bật/Tắt
 Tab:CreateToggle({
-    Name = "Tool TP",
+    Name = "Công Cụ Dịch Chuyển",
     CurrentValue = false,
     Flag = "ToggleTpTool",
     Callback = function(Value)
         ToolTP_Enabled = Value
         if Value then
             GiveTpTool()
-            Rayfield:Notify({Title = "KRP HUB", Content = "Đã bật Tool TP", Duration = 2})
+            Rayfield:Notify({Title = "KRP HUB", Content = "Đã bật Công Cụ Dịch Chuyển", Duration = 2})
         else
             RemoveTpTool()
-            Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt và xóa Tool TP", Duration = 2})
+            Rayfield:Notify({Title = "KRP HUB", Content = "Đã tắt Công Cụ Dịch Chuyển", Duration = 2})
         end
     end,
 })
