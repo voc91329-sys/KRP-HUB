@@ -776,6 +776,11 @@ SoundTab:CreateButton({ Name = "Tinh vệ", Callback = function() PlayMusic(1243
 SoundTab:CreateButton({ Name = "Montagem", Callback = function() PlayMusic(92789194329726) end })
 SoundTab:CreateButton({ Name = "Montagem Dj", Callback = function() PlayMusic(86756522213811) end })
 SoundTab:CreateButton({ Name = "Montagem", Callback = function() PlayMusic(136221009150327) end })
+SoundTab:CreateButton({ Name = "R1", Callback = function() PlayMusic(126846792948717) end })
+SoundTab:CreateButton({ Name = "R2", Callback = function() PlayMusic(107502355178148) end })
+SoundTab:CreateButton({ Name = "R3", Callback = function() PlayMusic(77063870786604) end })
+SoundTab:CreateButton({ Name = "R4", Callback = function() PlayMusic(121251398722523) end })
+SoundTab:CreateButton({ Name = "R5", Callback = function() PlayMusic(108578460274142) end })
 
 SoundTab:CreateButton({
     Name = "❌ XÓA NHẠC",
