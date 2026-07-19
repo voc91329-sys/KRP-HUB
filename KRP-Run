@@ -1,1 +1,2 @@
+-- Chạy thẳng File 1 không cần điều kiện gì
 loadstring(game:HttpGet("https://raw.githubusercontent.com/voc91329-sys/KRP-HUB/refs/heads/main/KRP-Run"))()
