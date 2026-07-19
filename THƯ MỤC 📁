@@ -602,6 +602,36 @@ Player.CharacterAdded:Connect(function()
     end
 end)
 
+-- nghi phần 9
+-- Tạo một biến để lưu lại con số trọng lực mà người chơi chọn trên thanh kéo
+-- (196 là mức trọng lực bình thường của Roblox)
+local TrongLucDuocChon = 196
+
+-- Tạo thanh kéo (Slider) để người chơi tự chỉnh mức trọng lực theo ý muốn
+Tab:AddSlider({
+    Name = "Mức Độ Trọng Lực", -- Tên hiển thị của thanh kéo trên giao diện UI
+    Min = -200, -- Giới hạn kéo thấp nhất (Số âm sẽ làm nhân vật bay ngược lên trời)
+    Max = 200, -- Giới hạn kéo cao nhất (Số to sẽ làm rơi rất nhanh)
+    Default = 196, -- Vị trí con trỏ chuột mặc định ban đầu của thanh kéo (Trọng lực gốc)
+    Color = Color3.fromRGB(255, 255, 255), -- Đặt màu cho thanh kéo là màu trắng
+    Increment = 1, -- Mỗi lần kéo sẽ nhích lên/xuống 1 đơn vị số
+    ValueName = "Gravity", -- Chữ hiển thị kế bên con số trên thanh kéo
+    Callback = function(Value)
+        -- Hàm này sẽ chạy liên tục mỗi khi bạn di chuyển thanh kéo
+        -- Gán giá trị đang kéo (Value) vào biến TrongLucDuocChon để cất giữ
+        TrongLucDuocChon = Value 
+    end    
+})
+
+-- Tạo nút bấm (Button) để áp dụng con số trọng lực đã chọn
+Tab:AddButton({
+    Name = "Bắt đầu", -- Tên hiển thị trên nút bấm
+    Callback = function()
+        -- Khi bấm nút, lệnh này sẽ can thiệp vào server (workspace) 
+        -- và thay đổi trọng lực của toàn bộ map bằng đúng con số đang lưu ở thanh kéo
+        workspace.Gravity = TrongLucDuocChon
+    end    
+})
 
 
 ---------------------------------------------------------
