@@ -610,10 +610,10 @@ local TrongLucDuocChon = 200
 -- Thanh kéo Trọng Lực (Đã sửa chuẩn form Rayfield)
 Tab:CreateSlider({
     Name = "Mức Độ Trọng Lực",
-    Range = {-200, 200}, -- Rayfield dùng Range thay vì Min/Max
+    Range = {-200, 2000}, -- Rayfield dùng Range thay vì Min/Max
     Increment = 1,
     Suffix = "Trọng lượng", 
-    CurrentValue = 196, -- Giá trị mặc định
+    CurrentValue = 200, -- Giá trị mặc định
     Flag = "GravitySlider",
     Callback = function(Value)
         TrongLucDuocChon = Value 
